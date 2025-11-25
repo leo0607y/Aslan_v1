@@ -28,7 +28,12 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <stdio.h>
+#include "stdio.h"
+#include <stdbool.h>
+#include <math.h>
+#include <string.h>
+
+
 #include "Encoder.h"
 
 /* USER CODE END Includes */
