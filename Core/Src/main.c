@@ -35,6 +35,8 @@
 
 
 #include "Encoder.h"
+#include "SW.h"
+#include "LED.h"
 
 /* USER CODE END Includes */
 
@@ -135,35 +137,16 @@ int main(void) {
 	MX_SPI3_Init();
 	/* USER CODE BEGIN 2 */
 	Init();
-	uint32_t last_print = HAL_GetTick();
+
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 	while (1) {
 		/* USER CODE END WHILE */
-		if ((HAL_GetTick() - last_print) >= 100) {
-				last_print = HAL_GetTick();
-				float dist_l = 0.0f, dist_r = 0.0f;
-				getWheelDistance(&dist_l, &dist_r);
-
-				/* float 表示サポートをリンクに追加したくない場合は %f を使わずに整形する：
-				   ここでは小数第1位まで表示する実装（整数演算で安全） */
-				int32_t l_tenths = (int32_t)(dist_l * 10.0f + (dist_l >= 0 ? 0.5f : -0.5f));
-				int32_t r_tenths = (int32_t)(dist_r * 10.0f + (dist_r >= 0 ? 0.5f : -0.5f));
-				int32_t l_whole = l_tenths / 10;
-				int32_t l_frac  = l_tenths % 10; if (l_frac < 0) l_frac = -l_frac;
-				int32_t r_whole = r_tenths / 10;
-				int32_t r_frac  = r_tenths % 10; if (r_frac < 0) r_frac = -r_frac;
-
-				char buf[80];
-				int len = snprintf(buf, sizeof(buf), "Wheel L: %ld.%1ld mm, R: %ld.%1ld mm\r\n",
-								   (long)l_whole, (long)l_frac, (long)r_whole, (long)r_frac);
-				if (len > 0) {
-					HAL_UART_Transmit(&huart1, (uint8_t*)buf, (uint16_t)len, HAL_MAX_DELAY);
-				}
-			}
 		/* USER CODE BEGIN 3 */
+
+
 	}
 	/* USER CODE END 3 */
 }
