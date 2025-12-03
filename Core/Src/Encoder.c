@@ -5,7 +5,6 @@
  *      Author: reoch
  */
 
-
 #include "Encoder.h"
 #include "tim.h"
 
@@ -17,7 +16,7 @@ int32_t enc_l_total = 0;
 int32_t enc_r_total = 0;
 static int16_t enc_l_cnt, enc_r_cnt;     // カウント値・累積値
 static float distance_1ms;               // 1msごとの移動距離
-static float distance;              // 10mm単位の距離
+static float distance;                   // 10mm単位の距離
 static float sab_distance_10mm;          // サブ用10mm距離
 static float total_distance;             // 総走行距離
 static float goal_judge_distance;        // ゴール判定用距離
@@ -163,5 +162,3 @@ void getWheelDistance(float *dist_l, float *dist_r)
     *dist_l = (float)enc_l_total * DISTANCE_PER_CNT;
     *dist_r = (float)enc_r_total * DISTANCE_PER_CNT;
 }
-
-

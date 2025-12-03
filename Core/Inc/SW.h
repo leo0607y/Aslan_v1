@@ -12,5 +12,9 @@
 
 uint16_t SWL(uint8_t);
 uint16_t SWR(uint8_t);
+uint16_t SW_GetState(char sw); // 'L' or 'R'
+
+uint16_t StatusL(uint8_t);
+uint16_t StatusR(uint8_t);
 
 #endif /* INC_SW_H_ */

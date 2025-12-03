@@ -22,9 +22,8 @@ typedef enum
     LED_OFF
 } led_color_t;
 
-
-
 void LED(led_color_t c);
+void LED_SetColor(led_color_t c); // エイリアス
 
 void LED1(int state1);
 void LED2(int state2);

@@ -5,9 +5,9 @@
  *      Author: reoch
  */
 
-
 #include "Sensor.h"
 #include "adc.h"
+#include "SW.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -40,12 +40,12 @@ UART_HandleTypeDef huart2;
 
 extern DMA_HandleTypeDef hdma_adc1;
 
-void ADC_Init()
+void Sensor_Init()
 {
     HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc_values, ADC_NUM);
 }
 
-void StorageBuffer(void)
+void Sensor_BufferUpdate(void)
 {
     buffer_0[L_index] = ((adc_values[0] - offset[0]) / coefficient[0]) * 1000;
     buffer_1[L_index] = ((adc_values[1] - offset[1]) / coefficient[1]) * 1000;
@@ -87,19 +87,23 @@ void Sensor_Update(void)
     L_index = 0;
 }
 
-void Calibration(void)
+void Sensor_Calibrate(void)
 {
-    printf("Calibration started\n");
+    printf("=== Calibration Mode ===\r\n");
+    printf("Move sensor over white and black lines...\r\n");
+    printf("Press Left button to finish calibration\r\n");
 
     float val_max_buffer[ADC_NUM] = {0};
-    float val_min_buffer[ADC_NUM] = {1000};
+    float val_min_buffer[ADC_NUM] = {4095};
     for (uint16_t i = 0; i < ADC_NUM; i++)
     {
         values_max[i] = 0;
-        values_min[i] = 1500;
+        values_min[i] = 4095;
         val_max_buffer[i] = 0;
-        val_min_buffer[i] = 1500;
+        val_min_buffer[i] = 4095;
     }
+
+    // 左スイッチが押されるまでキャリブレーションを続ける
     while (SWL('L') == 0)
     {
         for (uint16_t i = 0; i < ADC_NUM; i++)
@@ -116,15 +120,34 @@ void Calibration(void)
                 values_min[i] = val_min_buffer[i];
             }
         }
-
+        HAL_Delay(10);
     }
+
+    // 左スイッチが離されるまで待つ
+    while (SWL('L') != 0)
+    {
+        HAL_Delay(10);
+    }
+
+    // 係数とオフセットを計算
     for (uint16_t i = 0; i < ADC_NUM; i++)
     {
         coefficient[i] = (values_max[i] - values_min[i]);
-    }
-    for (uint16_t i = 0; i < ADC_NUM; i++)
-    {
+        if (coefficient[i] == 0)
+            coefficient[i] = 1; // ゼロ除算防止
         offset[i] = values_min[i];
     }
-    printf("Calibration completed\n");
+
+    printf("Calibration completed!\r\n");
+    printf("Max values: ");
+    for (uint16_t i = 0; i < ADC_NUM; i++)
+    {
+        printf("%.0f ", values_max[i]);
+    }
+    printf("\r\nMin values: ");
+    for (uint16_t i = 0; i < ADC_NUM; i++)
+    {
+        printf("%.0f ", values_min[i]);
+    }
+    printf("\r\n");
 }
