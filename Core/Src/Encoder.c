@@ -10,29 +10,31 @@
 
 extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim4;
-extern int32_t enc_l_total;
-extern int32_t enc_r_total;
+
 int32_t enc_l_total = 0;
 int32_t enc_r_total = 0;
-static int16_t enc_l_cnt, enc_r_cnt;     // カウント値・累積値
-static float distance_1ms;               // 1msごとの移動距離
-static float distance;                   // 10mm単位の距離
-static float sab_distance_10mm;          // サブ用10mm距離
-static float total_distance;             // 総走行距離
-static float goal_judge_distance;        // ゴール判定用距離
-static float side_line_judge_distance;   // サイドライン判定用距離
-static float distance_cross_line_ignore; // クロスライン無視距離
-static float distance_side_line_ignore;  // サイドライン無視距離
-static float speed_cnt;                  // 速度カウント
 static int16_t enc_l_cnt = 0;
 static int16_t enc_r_cnt = 0;
+static float distance_1ms;
+static float distance;
+static float sab_distance_10mm;
+static float total_distance;
+static float goal_judge_distance;
+static float side_line_judge_distance;
+static float distance_cross_line_ignore;
+static float distance_side_line_ignore;
+static float speed_cnt;
 
 void Encoder_Init(void)
 {
-    HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_ALL); // 左エンコーダ開始
-    HAL_TIM_Encoder_Start(&htim4, TIM_CHANNEL_ALL); // 右エンコーダ開始
+    HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_ALL);
+    HAL_TIM_Encoder_Start(&htim4, TIM_CHANNEL_ALL);
     TIM3->CNT = CNT_OFFSET;
     TIM4->CNT = CNT_OFFSET;
+    enc_l_total = 0;
+    enc_r_total = 0;
+    enc_l_cnt = 0;
+    enc_r_cnt = 0;
 }
 
 void Encoder_Update(void)
