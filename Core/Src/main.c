@@ -145,7 +145,8 @@ int main(void) {
 	while (1) {
 		/* USER CODE END WHILE */
 		/* USER CODE BEGIN 3 */
-
+SWL();
+SWR();
 
 	}
 	/* USER CODE END 3 */
