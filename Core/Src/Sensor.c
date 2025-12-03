@@ -142,12 +142,12 @@ void Sensor_Calibrate(void)
     printf("Max values: ");
     for (uint16_t i = 0; i < ADC_NUM; i++)
     {
-        printf("%.0f ", values_max[i]);
+
     }
     printf("\r\nMin values: ");
     for (uint16_t i = 0; i < ADC_NUM; i++)
     {
-        printf("%.0f ", values_min[i]);
+
     }
     printf("\r\n");
 }

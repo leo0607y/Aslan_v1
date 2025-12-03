@@ -37,6 +37,9 @@
 #include "SW.h"
 #include "LED.h"
 #include "Sensor.h"
+#include "Motor.h"
+#include "SpeedCtrl.h"
+#include "Motor.h"
 
 /* USER CODE END Includes */
 
@@ -95,6 +98,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 		Sensor_Update();
 		Encoder_Update();
+		SpeedCtrl_Update(); // 速度制御更新
+		motorCtrlFlip();	// モータ制御反映
 	}
 	if (htim->Instance == TIM7)
 	{ // 0.1ms
@@ -120,7 +125,9 @@ void Init(void)
 	LED(LED_GREEN); // キャリブレーション完了
 	HAL_Delay(500);
 
-	Encoder_Init(); // エンコーダ初期化
+	Encoder_Init();	  // エンコーダ初期化
+	Motor_Init();	  // モータ初期化
+	SpeedCtrl_Init(); // 速度制御初期化
 
 	LED(LED_OFF);
 	printf("System ready!\r\n");
@@ -251,44 +258,112 @@ int main(void)
 		static uint32_t last_print_time = 0;
 		if (timer1 - last_print_time > 1000) // 100ms毎に表示
 		{
-			printf("lion=%d, bayado=%d\r\n", lion, bayado);
+			if (speed_control_enabled)
+			{
+				// エンコーダカウント値も表示
+				int16_t enc_l, enc_r;
+				getEncoderCnt(&enc_l, &enc_r);
+				printf("Speed[m/s] L:%.3f(%.3f) R:%.3f(%.3f) PWM L:%d R:%d Enc L:%d R:%d\r\n",
+					   current_speed_l, target_speed_l,
+					   current_speed_r, target_speed_r,
+					   motor_l, motor_r,
+					   enc_l, enc_r);
+			}
+			else
+			{
+				printf("Manual PWM - L:%d R:%d\r\n", motor_l, motor_r);
+			}
 			last_print_time = timer1;
 		}
 
 		static int last_bayado = -1;
+		static uint32_t mode_start_time = 0;
+		static bool test_running = false;
+
 		if (bayado != last_bayado && bayado >= 0)
 		{
+			mode_start_time = timer1;
+			test_running = false;
+
 			switch (bayado)
 			{
 			case 0:
-				printf("=== Mode 0: RED - Standby ===\r\n");
+				printf("=== Mode 0: Standby - Motors OFF ===\r\n");
+				speed_control_enabled = false;
+				setMotor(0, 0);
 				break;
 			case 1:
-				printf("=== Mode 1: BLUE - Running ===\r\n");
+				printf("=== Mode 1: PI Test 0.45 m/s (Start in 3s, Stop after 5s) ===\r\n");
+				speed_control_enabled = false;
+				setMotor(0, 0);
 				break;
 			case 2:
-				printf("=== Mode 2: GREEN - Mode 2 ===\r\n");
+				printf("=== Mode 2: PI Test 0.9 m/s (Start in 3s, Stop after 5s) ===\r\n");
+				speed_control_enabled = false;
+				setMotor(0, 0);
 				break;
 			case 3:
-				printf("=== Mode 3: CYAN - Mode 3 ===\r\n");
+				printf("=== Mode 3: Speed 1.5 m/s ===\r\n");
+				speed_control_enabled = true;
+				setTarget(1.5f);
 				break;
 			case 4:
-				printf("=== Mode 4: MAGENTA - Mode 4 ===\r\n");
+				printf("=== Mode 4: Speed -0.5 m/s (Backward) ===\r\n");
+				speed_control_enabled = true;
+				setTarget(-0.5f);
 				break;
 			case 5:
-				printf("=== Mode 5: YELLOW - Mode 5 ===\r\n");
+				printf("=== Mode 5: Turn Right (L:0.5, R:-0.5) ===\r\n");
+				speed_control_enabled = true;
+				setTargetSpeed(0.5f, -0.5f);
 				break;
 			case 6:
-				printf("=== Mode 6: WHITE - Mode 6 ===\r\n");
+				printf("=== Mode 6: Manual PWM 500 ===\r\n");
+				speed_control_enabled = false;
+				setMotor(500, 500);
 				break;
 			case 7:
-				printf("=== Mode 7: OFF - Stopped ===\r\n");
+				printf("=== Mode 7: Manual PWM 1000 ===\r\n");
+				speed_control_enabled = false;
+				setMotor(1000, 1000);
 				break;
 			default:
-				printf("=== Mode: Unknown ===\r\n");
+				printf("=== Mode: Unknown - Motors OFF ===\r\n");
+				speed_control_enabled = false;
+				setMotor(0, 0);
 				break;
 			}
 			last_bayado = bayado;
+		}
+
+		// 自動テストシーケンス (Mode 1, 2)
+		if (bayado == 1 || bayado == 2)
+		{
+			uint32_t elapsed = timer1 - mode_start_time;
+
+			// 3秒後に開始
+			if (elapsed >= 30000 && !test_running)
+			{
+				test_running = true;
+				if (bayado == 1)
+				{
+					setTarget(0.45f);
+				}
+				else
+				{
+					setTarget(0.9f);
+				}
+				speed_control_enabled = true;
+			}
+
+			// 8秒後(開始から5秒後)に停止
+			if (elapsed >= 130000 && test_running)
+			{
+				test_running = false;
+				setMotor(0, 0);
+				speed_control_enabled = false;
+				printf(">>> Test stopped\r\n");
+			}
 		}
 	}
 	/* USER CODE END 3 */
